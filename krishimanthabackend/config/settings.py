@@ -29,7 +29,7 @@ DJANGO_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "apps"
+    "apps",
 ]
 
 THIRD_PARTY_APPS = [
@@ -102,7 +102,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
 # ------------------------------------------------------------------
-# Database — PostgreSQL (all connection details from environment)
+# Database — PostgreSQL (Persistent connection + Health check)
 # ------------------------------------------------------------------
 DATABASES = {
     "default": env.db(
@@ -110,6 +110,10 @@ DATABASES = {
         default="postgres://krishimanthan:krishimanthan_dev_pass@localhost:5432/krishimanthan_db",
     )
 }
+
+# Neon connection reuse: bar-bar naya SSL handshake nahi hoga
+DATABASES["default"]["CONN_MAX_AGE"] = 600
+DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -179,30 +183,26 @@ SPECTACULAR_SETTINGS = {
 }
 
 # ------------------------------------------------------------------
-# CORS — allow the React frontend (Vite dev server + configured prod origin)
-# ------------------------------------------------------------------
-# ------------------------------------------------------------------
 # CORS
 # ------------------------------------------------------------------
 CORS_ALLOW_ALL_ORIGINS = env.bool("CORS_ALLOW_ALL_ORIGINS", default=True)
 CORS_ALLOW_CREDENTIALS = True
 
 # ------------------------------------------------------------------
-# LLM integration — provider/key are environment-driven; see apps/llmintegration
+# LLM integration
 # ------------------------------------------------------------------
-LLM_PROVIDER = env("LLM_PROVIDER", default="none")  # "anthropic" | "openai" | "none"
+LLM_PROVIDER = env("LLM_PROVIDER", default="none")
 LLM_API_KEY = env("LLM_API_KEY", default="")
 LLM_MODEL = env("LLM_MODEL", default="claude-sonnet-4-6")
 
 # ------------------------------------------------------------------
-# Weather (OpenWeatherMap) — optional; falls back to stored WeatherCache if unset
+# Weather (OpenWeatherMap)
 # ------------------------------------------------------------------
 WEATHER_API_KEY = env("WEATHER_API_KEY", default="")
 WEATHER_API_PROVIDER = env("WEATHER_API_PROVIDER", default="openweathermap")
 
 # ------------------------------------------------------------------
-# Email (used by contact form + subscribe confirmations) — console backend by
-# default so it works out-of-the-box in dev without SMTP credentials.
+# Email
 # ------------------------------------------------------------------
 EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
 EMAIL_HOST = env("EMAIL_HOST", default="")
@@ -214,19 +214,14 @@ DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="no-reply@krishimanthan.i
 CONTACT_NOTIFY_EMAIL = env("CONTACT_NOTIFY_EMAIL", default="info@krishimanthan.in")
 
 # ------------------------------------------------------------------
-# Upload hardening — hard caps as defense-in-depth on top of the
-# per-field validators in apps/core/validators.py (image/PDF signature +
-# extension + size checks). Anything larger than this is rejected by
-# Django before it even reaches a view/validator.
+# Upload hardening
 # ------------------------------------------------------------------
-DATA_UPLOAD_MAX_MEMORY_SIZE = 25 * 1024 * 1024  # 25MB
-FILE_UPLOAD_MAX_MEMORY_SIZE = 25 * 1024 * 1024  # 25MB
-FILE_UPLOAD_PERMISSIONS = 0o644  # uploaded files are never saved executable
+DATA_UPLOAD_MAX_MEMORY_SIZE = 25 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 25 * 1024 * 1024
+FILE_UPLOAD_PERMISSIONS = 0o644
 
 # ------------------------------------------------------------------
-# TinyMCE — rich text editor used on long-form admin fields (news content,
-# scheme benefits/eligibility/process, event descriptions, FAQ answers,
-# about intro, static legal pages)
+# TinyMCE
 # ------------------------------------------------------------------
 TINYMCE_DEFAULT_CONFIG = {
     "height": 320,
@@ -238,7 +233,7 @@ TINYMCE_DEFAULT_CONFIG = {
 }
 
 # ------------------------------------------------------------------
-# Jazzmin — modern, clean, responsive Django Admin theme
+# Jazzmin
 # ------------------------------------------------------------------
 JAZZMIN_SETTINGS = {
     "site_title": "Krishi Manthan Admin",
