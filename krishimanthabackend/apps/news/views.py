@@ -2,18 +2,24 @@ from rest_framework import viewsets
 from django_filters import rest_framework as filters
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django.utils import timezone
+from django.db.models import Q
 from .models import NewsItem, NewsCategory
 from .serializers import NewsItemListSerializer, NewsItemDetailSerializer, NewsCategorySerializer
 
 MONTH_MAP = {
+    # English names
     "january": 1, "february": 2, "march": 3, "april": 4,
     "may": 5, "june": 6, "july": 7, "august": 8,
     "september": 9, "october": 10, "november": 11, "december": 12,
+    # Hindi names
+    "जनवरी": 1, "फ़रवरी": 2, "फरवरी": 2, "मार्च": 3, "अप्रैल": 4,
+    "मई": 5, "जून": 6, "जुलाई": 7, "अगस्त": 8,
+    "सितंबर": 9, "अक्टूबर": 10, "नवंबर": 11, "दिसंबर": 12,
 }
 
 class NewsItemFilter(filters.FilterSet):
-    """Exposes clean query params (?category=<slug>&department=<slug>&year=2026&month=2)"""
-    category = filters.CharFilter(field_name="category__slug")
+    """Exposes clean query params (?category=...&department=...&year=2026&month=1)"""
+    category = filters.CharFilter(method="filter_by_category")
     department = filters.CharFilter(field_name="department__slug")
     year = filters.NumberFilter(field_name="published_date__year")
     month = filters.CharFilter(method="filter_by_month")
@@ -21,6 +27,23 @@ class NewsItemFilter(filters.FilterSet):
     class Meta:
         model = NewsItem
         fields = ["category", "department", "year", "month"]
+
+    def filter_by_category(self, queryset, name, value):
+        if not value:
+            return queryset
+        val_clean = str(value).strip()
+        # Frontend chahe slug bheje ya Hindi/English naam, dono match honge
+        category_fields = [f.name for f in NewsCategory._meta.get_fields()]
+        q_filter = Q(category__slug__iexact=val_clean)
+        
+        if "name_hi" in category_fields:
+            q_filter |= Q(category__name_hi__iexact=val_clean)
+        if "name_en" in category_fields:
+            q_filter |= Q(category__name_en__iexact=val_clean)
+        if "name" in category_fields:
+            q_filter |= Q(category__name__iexact=val_clean)
+
+        return queryset.filter(q_filter)
 
     def filter_by_month(self, queryset, name, value):
         if not value:
