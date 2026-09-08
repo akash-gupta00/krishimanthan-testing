@@ -1,0 +1,46 @@
+/* Krishi Manthan — small polish on top of Jazzmin's flatly theme */
+
+.brand-link {
+  font-weight: 700 !important;
+  letter-spacing: 0.02em;
+}
+
+.main-sidebar .nav-link {
+  border-radius: 6px;
+  margin: 1px 6px;
+}
+
+.card {
+  border-radius: 10px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+}
+
+.card-header {
+  border-radius: 10px 10px 0 0 !important;
+  font-weight: 600;
+}
+
+.btn {
+  border-radius: 6px !important;
+}
+
+.small-box {
+  border-radius: 10px !important;
+}
+
+table.table thead th {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.content-wrapper {
+  background-color: #f4f6f8;
+}
+
+@media (max-width: 767px) {
+  .content-wrapper {
+    padding: 0 8px;
+  }
+}

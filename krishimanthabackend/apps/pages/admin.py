@@ -1,0 +1,9 @@
+from django.contrib import admin
+from .models import StaticPage
+
+
+@admin.register(StaticPage)
+class StaticPageAdmin(admin.ModelAdmin):
+    list_display = ("title_en", "slug", "updated_at")
+    prepopulated_fields = {"slug": ("title_en",)}
+    search_fields = ("title_en", "title_hi", "slug")
