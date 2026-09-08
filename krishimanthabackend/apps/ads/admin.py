@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.db import models
+from tinymce.widgets import TinyMCE
 from .models import Advertisement, AdSlot
 
 
@@ -14,6 +16,11 @@ class AdvertisementAdmin(admin.ModelAdmin):
     list_editable = ("status",)
     search_fields = ("title", "advertiser_name", "advertiser_email")
     actions = ["approve_ads", "reject_ads"]
+
+    # Ye line Description box me About page jaisa toolbar activate karegi
+    formfield_overrides = {
+        models.TextField: {"widget": TinyMCE()},
+    }
 
     @admin.action(description="Approve selected ads (starts today, ends after their requested duration)")
     def approve_ads(self, request, queryset):
