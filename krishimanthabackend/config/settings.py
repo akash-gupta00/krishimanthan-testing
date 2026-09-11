@@ -3,6 +3,7 @@ Django settings for Krishi Manthan backend.
 Config is driven entirely by environment variables (see .env.example) —
 never hardcode secrets/passwords in code.
 """
+import os
 from pathlib import Path
 from datetime import timedelta
 import environ
@@ -138,24 +139,33 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
-# Standard storage bypasses compression errors on missing CSS/maps
+# Standard storage prevents missing asset build failures
 STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# Cloudinary Configuration
+# ------------------------------------------------------------------
+# Cloudinary Credentials Setup
+# ------------------------------------------------------------------
+CLOUDINARY_CLOUD_NAME = str(env("CLOUDINARY_CLOUD_NAME", default="afemxggo")).strip()
+CLOUDINARY_API_KEY = str(env("CLOUDINARY_API_KEY", default="915116215253549")).strip()
+CLOUDINARY_API_SECRET = str(env("CLOUDINARY_API_SECRET", default="dyjdVS__dwgQOG7AQv58JI6PD9I")).strip()
+
+# Bind URL directly into process environment to resolve signature generation
+os.environ["CLOUDINARY_URL"] = f"cloudinary://{CLOUDINARY_API_KEY}:{CLOUDINARY_API_SECRET}@{CLOUDINARY_CLOUD_NAME}"
+
 cloudinary.config(
-    cloud_name=env("CLOUDINARY_CLOUD_NAME", default="afemxggo"),
-    api_key=env("CLOUDINARY_API_KEY", default="915116215253549"),
-    api_secret=env("CLOUDINARY_API_SECRET", default="dyjdVS__dwgQOG7AQv58JI6PD9I"),
+    cloud_name=CLOUDINARY_CLOUD_NAME,
+    api_key=CLOUDINARY_API_KEY,
+    api_secret=CLOUDINARY_API_SECRET,
     secure=True,
 )
 
 CLOUDINARY_STORAGE = {
-    "CLOUD_NAME": env("CLOUDINARY_CLOUD_NAME", default="afemxggo"),
-    "API_KEY": env("CLOUDINARY_API_KEY", default="915116215253549"),
-    "API_SECRET": env("CLOUDINARY_API_SECRET", default="dyjdVS__dwgQOG7AQv58JI6PD9I"),
+    "CLOUD_NAME": CLOUDINARY_CLOUD_NAME,
+    "API_KEY": CLOUDINARY_API_KEY,
+    "API_SECRET": CLOUDINARY_API_SECRET,
 }
 
 DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
