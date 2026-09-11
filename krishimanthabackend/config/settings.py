@@ -6,6 +6,7 @@ never hardcode secrets/passwords in code.
 from pathlib import Path
 from datetime import timedelta
 import environ
+import cloudinary
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -136,12 +137,21 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
+
+# Standard storage bypasses compression errors on missing CSS/maps
 STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# Cloudinary Storage Settings
+# Cloudinary Configuration
+cloudinary.config(
+    cloud_name=env("CLOUDINARY_CLOUD_NAME", default="afemxggo"),
+    api_key=env("CLOUDINARY_API_KEY", default="915116215253549"),
+    api_secret=env("CLOUDINARY_API_SECRET", default="dyjdVS__dwgQOG7AQv58JI6PD9I"),
+    secure=True,
+)
+
 CLOUDINARY_STORAGE = {
     "CLOUD_NAME": env("CLOUDINARY_CLOUD_NAME", default="afemxggo"),
     "API_KEY": env("CLOUDINARY_API_KEY", default="915116215253549"),

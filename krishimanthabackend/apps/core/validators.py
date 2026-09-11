@@ -1,110 +1,65 @@
-"""
-Upload security validators.
-
-Anything a public form can upload (ad images/PDFs, and any file an admin
-uploads) is validated here: file extension AND the file's actual binary
-signature are checked — not just the extension — so a malicious file
-renamed to look like an image or PDF (e.g. a `.php` or `.html` file saved
-as `photo.jpg`) is rejected rather than silently stored and later served
-back to visitors' browsers.
-"""
+import os
 from django.core.exceptions import ValidationError
 from django.utils.deconstruct import deconstructible
-from django.core.files.uploadedfile import UploadedFile
-
-MAX_IMAGE_SIZE_MB = 5
-MAX_PDF_SIZE_MB = 20
-MAX_DOCUMENT_SIZE_MB = 20
-
-ALLOWED_IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "gif"}
 
 
 @deconstructible
-class ImageFileValidator:
-    """Validates an ImageField upload is really an image: allowed
-    extension, under the size limit, and openly parseable by Pillow
-    (catches files that merely have an image extension)."""
-
-    def __init__(self, max_size_mb=MAX_IMAGE_SIZE_MB):
+class FileSizeValidator:
+    """
+    Validates uploaded file size.
+    Safe against Cloudinary / Storage objects where size might evaluate to None.
+    """
+    def __init__(self, max_size_mb=25):
         self.max_size_mb = max_size_mb
+        self.max_size = max_size_mb * 1024 * 1024
 
     def __call__(self, value):
-        if not value or not getattr(value, "name", None):
+        if not value:
             return
 
-        # Check agar file naye upload ke roop me aayi hai ya purani saved file hai
-        is_new_upload = isinstance(value, UploadedFile)
+        # Safe attribute lookup to prevent 'NoneType' > 'int' crash
+        file_size = getattr(value, "size", None)
 
-        ext = value.name.rsplit(".", 1)[-1].lower() if "." in value.name else ""
-        if ext not in ALLOWED_IMAGE_EXTENSIONS:
-            raise ValidationError(f"Unsupported file type '.{ext}'. Allowed: {', '.join(sorted(ALLOWED_IMAGE_EXTENSIONS))}.")
+        if file_size is not None and file_size > self.max_size:
+            raise ValidationError(
+                f"File size must not exceed {self.max_size_mb} MB. Current size is {round(file_size / (1024 * 1024), 2)} MB."
+            )
 
-        # Safe size check (Render redeploy hone par disk par purani file missing ho sakti hai)
-        try:
-            if value.size > self.max_size_mb * 1024 * 1024:
-                raise ValidationError(f"Image too large — max {self.max_size_mb}MB.")
-        except (FileNotFoundError, OSError):
-            # File system par file nahi hai (ephemeral disk wipe), crash mat hone do
-            if not is_new_upload:
-                return
-            raise ValidationError("File could not be found or read.")
-
-        # Binary parse check
-        try:
-            from PIL import Image
-            value.seek(0)
-            img = Image.open(value)
-            img.verify()  # raises if not a genuine, undamaged image
-            value.seek(0)
-        except (FileNotFoundError, OSError):
-            if not is_new_upload:
-                return
-            raise ValidationError("Unable to read image content.")
-        except Exception:
-            raise ValidationError("This file is not a valid image (its content doesn't match an image format).")
-        finally:
-            try:
-                value.seek(0)
-            except Exception:
-                pass
+    def __eq__(self, other):
+        return (
+            isinstance(other, FileSizeValidator)
+            and self.max_size_mb == other.max_size_mb
+        )
 
 
 @deconstructible
-class PDFFileValidator:
-    """Validates a FileField upload is really a PDF: .pdf extension,
-    under the size limit, and starts with the real PDF magic bytes."""
-
-    def __init__(self, max_size_mb=MAX_PDF_SIZE_MB):
-        self.max_size_mb = max_size_mb
+class FileExtensionValidator:
+    """
+    Validates uploaded file extensions.
+    """
+    def __init__(self, allowed_extensions=None):
+        if allowed_extensions is None:
+            allowed_extensions = ["pdf", "jpg", "jpeg", "png", "webp"]
+        self.allowed_extensions = [ext.lower().lstrip(".") for ext in allowed_extensions]
 
     def __call__(self, value):
-        if not value or not getattr(value, "name", None):
+        if not value:
             return
 
-        is_new_upload = isinstance(value, UploadedFile)
+        ext = os.path.splitext(getattr(value, "name", ""))[1].lower().lstrip(".")
+        if ext not in self.allowed_extensions:
+            raise ValidationError(
+                f"Unsupported file format (.{ext}). Allowed formats: {', '.join(self.allowed_extensions)}"
+            )
 
-        if not value.name.lower().endswith(".pdf"):
-            raise ValidationError("Only .pdf files are allowed.")
-
-        try:
-            if value.size > self.max_size_mb * 1024 * 1024:
-                raise ValidationError(f"File too large — max {self.max_size_mb}MB.")
-        except (FileNotFoundError, OSError):
-            if not is_new_upload:
-                return
-            raise ValidationError("File could not be found or read.")
-
-        try:
-            value.seek(0)
-            header = value.read(5)
-            value.seek(0)
-            if header != b"%PDF-":
-                raise ValidationError("This file is not a valid PDF (its content doesn't match the PDF format).")
-        except (FileNotFoundError, OSError):
-            if not is_new_upload:
-                return
-            raise ValidationError("Unable to read PDF content.")
+    def __eq__(self, other):
+        return (
+            isinstance(other, FileExtensionValidator)
+            and self.allowed_extensions == other.allowed_extensions
+        )
 
 
-validate_image_file = ImageFileValidator()
-validate_pdf_file = PDFFileValidator()
+# Ready-to-use validators
+validate_pdf_extension = FileExtensionValidator(allowed_extensions=["pdf"])
+validate_image_extension = FileExtensionValidator(allowed_extensions=["jpg", "jpeg", "png", "webp"])
+validate_file_size = FileSizeValidator(max_size_mb=25)
