@@ -139,34 +139,27 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
-# Standard storage prevents missing asset build failures
+# Standard storage ignores missing map/css files during build
 STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # ------------------------------------------------------------------
-# Cloudinary Credentials Setup
+# Cloudinary Storage Configuration (via CLOUDINARY_URL)
 # ------------------------------------------------------------------
-CLOUDINARY_CLOUD_NAME = str(env("CLOUDINARY_CLOUD_NAME", default="afemxggo")).strip()
-CLOUDINARY_API_KEY = str(env("CLOUDINARY_API_KEY", default="915116215253549")).strip()
-CLOUDINARY_API_SECRET = str(env("CLOUDINARY_API_SECRET", default="dyjdVS__dwgQOG7AQv58JI6PD9I")).strip()
-
-# Bind URL directly into process environment to resolve signature generation
-os.environ["CLOUDINARY_URL"] = f"cloudinary://{CLOUDINARY_API_KEY}:{CLOUDINARY_API_SECRET}@{CLOUDINARY_CLOUD_NAME}"
-
-cloudinary.config(
-    cloud_name=CLOUDINARY_CLOUD_NAME,
-    api_key=CLOUDINARY_API_KEY,
-    api_secret=CLOUDINARY_API_SECRET,
-    secure=True,
+CLOUDINARY_URL_ENV = env(
+    "CLOUDINARY_URL",
+    default="cloudinary://915116215253549:dyjdVS__dwgQOG7AQv58JI6PD9I@afemxggo",
 )
 
-CLOUDINARY_STORAGE = {
-    "CLOUD_NAME": CLOUDINARY_CLOUD_NAME,
-    "API_KEY": CLOUDINARY_API_KEY,
-    "API_SECRET": CLOUDINARY_API_SECRET,
-}
+# Set environment variable explicitly for SDK auto-detection
+os.environ["CLOUDINARY_URL"] = CLOUDINARY_URL_ENV
+
+cloudinary.config(
+    cloudinary_url=CLOUDINARY_URL_ENV,
+    secure=True,
+)
 
 DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
