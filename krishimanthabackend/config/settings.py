@@ -28,9 +28,9 @@ DJANGO_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
-    "cloudinary_storage",  # Cloudinary static/media handling
+    "cloudinary_storage",
     "django.contrib.staticfiles",
-    "cloudinary",          # Cloudinary core SDK
+    "cloudinary",
     "apps",
 ]
 
@@ -136,13 +136,12 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
-# Manifest hata kar CompressedStaticFilesStorage karein
 STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# Cloudinary Storage Settings (Prevents Render ephemeral deletion)
+# Cloudinary Storage Settings
 CLOUDINARY_STORAGE = {
     "CLOUD_NAME": env("CLOUDINARY_CLOUD_NAME", default="afemxggo"),
     "API_KEY": env("CLOUDINARY_API_KEY", default="915116215253549"),
@@ -190,7 +189,7 @@ SIMPLE_JWT = {
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "Krishi Manthan API",
-    "DESCRIPTION": "Backend API powering the Krishi Manthan agriculture portal — news, government schemes, events, resources, ads, announcements, market prices, weather, contact, subscribers, FAQs, testimonials, e-paper and search.",
+    "DESCRIPTION": "Backend API powering the Krishi Manthan agriculture portal.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "SCHEMA_PATH_PREFIX": "/api/v1/",
@@ -202,11 +201,9 @@ SPECTACULAR_SETTINGS = {
 CORS_ALLOW_ALL_ORIGINS = env.bool("CORS_ALLOW_ALL_ORIGINS", default=True)
 CORS_ALLOW_CREDENTIALS = True
 
-# Allows Frontend (krishimanthan.in) to embed Backend PDFs inside <iframe>
 X_FRAME_OPTIONS = "ALLOWALL"
 SILENCED_SYSTEM_CHECKS = ["security.W019"]
 
-# Fixes 403 Forbidden on Render Admin forms
 CSRF_TRUSTED_ORIGINS = [
     "https://krishimanthan-testing.onrender.com",
     "https://krishimanthan.in",
@@ -307,7 +304,7 @@ JAZZMIN_SETTINGS = {
     "default_icon_parents": "fas fa-chevron-circle-right",
     "default_icon_children": "fas fa-circle",
     "related_modal_active": True,
-    "custom_css": "css/admin-custom.css",
+    "custom_css": None,
     "show_ui_builder": False,
     "changeform_format": "horizontal_tabs",
 }
