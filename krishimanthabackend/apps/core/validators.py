@@ -5,24 +5,18 @@ from django.utils.deconstruct import deconstructible
 
 @deconstructible
 class FileSizeValidator:
-    """
-    Validates uploaded file size.
-    Safe against Cloudinary / Storage objects where size might evaluate to None.
-    """
     def __init__(self, max_size_mb=25):
         self.max_size_mb = max_size_mb
-        self.max_size = max_size_mb * 1024 * 1024
 
     def __call__(self, value):
         if not value:
             return
 
-        # Safe attribute lookup to prevent 'NoneType' > 'int' crash
+        # Safe attribute lookup to handle NoneType from Cloudinary / storage backend
         file_size = getattr(value, "size", None)
-
-        if file_size is not None and file_size > self.max_size:
+        if file_size is not None and file_size > self.max_size_mb * 1024 * 1024:
             raise ValidationError(
-                f"File size must not exceed {self.max_size_mb} MB. Current size is {round(file_size / (1024 * 1024), 2)} MB."
+                f"File size must not exceed {self.max_size_mb} MB."
             )
 
     def __eq__(self, other):
@@ -34,9 +28,6 @@ class FileSizeValidator:
 
 @deconstructible
 class FileExtensionValidator:
-    """
-    Validates uploaded file extensions.
-    """
     def __init__(self, allowed_extensions=None):
         if allowed_extensions is None:
             allowed_extensions = ["pdf", "jpg", "jpeg", "png", "webp"]
@@ -59,7 +50,17 @@ class FileExtensionValidator:
         )
 
 
-# Ready-to-use validators
+# Direct instances
 validate_pdf_extension = FileExtensionValidator(allowed_extensions=["pdf"])
 validate_image_extension = FileExtensionValidator(allowed_extensions=["jpg", "jpeg", "png", "webp"])
 validate_file_size = FileSizeValidator(max_size_mb=25)
+
+# Backward-compatible function validators (required by sitesettings and models)
+def validate_image_file(value):
+    validate_image_extension(value)
+    validate_file_size(value)
+
+
+def validate_pdf_file(value):
+    validate_pdf_extension(value)
+    validate_file_size(value)
