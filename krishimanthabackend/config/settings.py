@@ -4,8 +4,10 @@ Config is driven entirely by environment variables (see .env.example) —
 never hardcode secrets/passwords in code.
 """
 import os
+import re
 from pathlib import Path
 from datetime import timedelta
+from urllib.parse import urlparse
 import environ
 import cloudinary
 
@@ -139,25 +141,54 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
-# Standard storage ignores missing map/css files during build
+# Standard storage bypasses compression errors on missing CSS/map assets
 STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # ------------------------------------------------------------------
-# Cloudinary Storage Configuration (via CLOUDINARY_URL)
+# Cloudinary Credentials Setup (Auto-Clean & Resilient Binding)
 # ------------------------------------------------------------------
-CLOUDINARY_URL_ENV = env(
-    "CLOUDINARY_URL",
-    default="cloudinary://915116215253549:dyjdVS__dwgQOG7AQv58JI6PD9I@afemxggo",
-)
+RAW_CLOUDINARY_URL = os.environ.get("CLOUDINARY_URL") or env("CLOUDINARY_URL", default="")
+# Clean accidental whitespace like 'cloudinary ://'
+CLEAN_CLOUDINARY_URL = re.sub(r"^cloudinary\s*://", "cloudinary://", RAW_CLOUDINARY_URL.strip())
 
-# Set environment variable explicitly for SDK auto-detection
-os.environ["CLOUDINARY_URL"] = CLOUDINARY_URL_ENV
+DEFAULT_CLOUD_NAME = "afemxggo"
+DEFAULT_API_KEY = "915116215253549"
+DEFAULT_API_SECRET = "dyjdVS__dwgQOG7AQv58JI6PD9I"
 
+if CLEAN_CLOUDINARY_URL and "@" in CLEAN_CLOUDINARY_URL:
+    try:
+        parsed_cld = urlparse(CLEAN_CLOUDINARY_URL)
+        if parsed_cld.username:
+            DEFAULT_API_KEY = parsed_cld.username.strip()
+        if parsed_cld.password:
+            DEFAULT_API_SECRET = parsed_cld.password.strip()
+        if parsed_cld.hostname:
+            DEFAULT_CLOUD_NAME = parsed_cld.hostname.strip()
+    except Exception:
+        pass
+
+CLOUDINARY_CLOUD_NAME = (os.environ.get("CLOUDINARY_CLOUD_NAME") or env("CLOUDINARY_CLOUD_NAME", default=DEFAULT_CLOUD_NAME)).strip()
+CLOUDINARY_API_KEY = (os.environ.get("CLOUDINARY_API_KEY") or env("CLOUDINARY_API_KEY", default=DEFAULT_API_KEY)).strip()
+CLOUDINARY_API_SECRET = (os.environ.get("CLOUDINARY_API_SECRET") or env("CLOUDINARY_API_SECRET", default=DEFAULT_API_SECRET)).strip()
+
+FINAL_CLOUDINARY_URL = f"cloudinary://{CLOUDINARY_API_KEY}:{CLOUDINARY_API_SECRET}@{CLOUDINARY_CLOUD_NAME}"
+os.environ["CLOUDINARY_URL"] = FINAL_CLOUDINARY_URL
+
+# Dict required by django-cloudinary-storage
+CLOUDINARY_STORAGE = {
+    "CLOUD_NAME": CLOUDINARY_CLOUD_NAME,
+    "API_KEY": CLOUDINARY_API_KEY,
+    "API_SECRET": CLOUDINARY_API_SECRET,
+}
+
+# Config required by Cloudinary Python SDK
 cloudinary.config(
-    cloudinary_url=CLOUDINARY_URL_ENV,
+    cloud_name=CLOUDINARY_CLOUD_NAME,
+    api_key=CLOUDINARY_API_KEY,
+    api_secret=CLOUDINARY_API_SECRET,
     secure=True,
 )
 
