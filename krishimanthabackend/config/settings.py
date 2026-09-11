@@ -183,10 +183,14 @@ SPECTACULAR_SETTINGS = {
 }
 
 # ------------------------------------------------------------------
-# CORS
+# CORS & Embedding Security (Fixes PDF Iframe refused to connect)
 # ------------------------------------------------------------------
 CORS_ALLOW_ALL_ORIGINS = env.bool("CORS_ALLOW_ALL_ORIGINS", default=True)
 CORS_ALLOW_CREDENTIALS = True
+
+# Allows Frontend (krishimanthan.in) to embed Backend PDFs inside <iframe>
+X_FRAME_OPTIONS = "ALLOWALL"
+SILENCED_SYSTEM_CHECKS = ["security.W019"]
 
 # ------------------------------------------------------------------
 # LLM integration
