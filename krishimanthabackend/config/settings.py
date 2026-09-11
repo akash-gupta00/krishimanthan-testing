@@ -154,9 +154,13 @@ RAW_CLOUDINARY_URL = os.environ.get("CLOUDINARY_URL") or env("CLOUDINARY_URL", d
 # Clean accidental whitespace like 'cloudinary ://'
 CLEAN_CLOUDINARY_URL = re.sub(r"^cloudinary\s*://", "cloudinary://", RAW_CLOUDINARY_URL.strip())
 
+# NOTE: These are fallback defaults only, used if env vars are missing.
+# Always prefer setting real values via Render environment variables.
+# FIXED: corrected API secret typo (was "dyjdVS__dwgQOG7AQv58JI6PD9I" with
+# a double underscore — the real Cloudinary secret has a single underscore).
 DEFAULT_CLOUD_NAME = "afemxggo"
 DEFAULT_API_KEY = "915116215253549"
-DEFAULT_API_SECRET = "dyjdVS__dwgQOG7AQv58JI6PD9I"
+DEFAULT_API_SECRET = "dyjdVS_dwgQOG7AQv58JI6PD9I"
 
 if CLEAN_CLOUDINARY_URL and "@" in CLEAN_CLOUDINARY_URL:
     try:
