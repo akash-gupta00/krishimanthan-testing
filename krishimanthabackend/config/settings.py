@@ -183,7 +183,7 @@ SPECTACULAR_SETTINGS = {
 }
 
 # ------------------------------------------------------------------
-# CORS & Embedding Security (Fixes PDF Iframe refused to connect)
+# CORS & Embedding Security
 # ------------------------------------------------------------------
 CORS_ALLOW_ALL_ORIGINS = env.bool("CORS_ALLOW_ALL_ORIGINS", default=True)
 CORS_ALLOW_CREDENTIALS = True
@@ -191,6 +191,18 @@ CORS_ALLOW_CREDENTIALS = True
 # Allows Frontend (krishimanthan.in) to embed Backend PDFs inside <iframe>
 X_FRAME_OPTIONS = "ALLOWALL"
 SILENCED_SYSTEM_CHECKS = ["security.W019"]
+
+# CSRF Trusted Origins (403 Forbidden Fix for Render & Custom Domains)
+CSRF_TRUSTED_ORIGINS = [
+    "https://krishimanthan-testing.onrender.com",
+    "https://krishimanthan.in",
+    "https://www.krishimanthan.in",
+    "http://localhost:5173",
+    "http://localhost:3000",
+]
+
+# Tell Django it is behind a reverse proxy (Render) so HTTPS CSRF checks pass
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # ------------------------------------------------------------------
 # LLM integration
