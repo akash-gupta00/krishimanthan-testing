@@ -28,7 +28,9 @@ DJANGO_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
+    "cloudinary_storage",  # Cloudinary static/media handling
     "django.contrib.staticfiles",
+    "cloudinary",          # Cloudinary core SDK
     "apps",
 ]
 
@@ -111,7 +113,6 @@ DATABASES = {
     )
 }
 
-# Neon connection reuse: bar-bar naya SSL handshake nahi hoga
 DATABASES["default"]["CONN_MAX_AGE"] = 600
 DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
 
@@ -129,6 +130,9 @@ TIME_ZONE = "Asia/Kolkata"
 USE_I18N = True
 USE_TZ = True
 
+# ------------------------------------------------------------------
+# Static & Media Storage Configuration
+# ------------------------------------------------------------------
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
@@ -136,6 +140,15 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+# Cloudinary Storage Settings (Prevents Render ephemeral deletion)
+CLOUDINARY_STORAGE = {
+    "CLOUD_NAME": env("CLOUDINARY_CLOUD_NAME", default="afemxggo"),
+    "API_KEY": env("CLOUDINARY_API_KEY", default="915116215253549"),
+    "API_SECRET": env("CLOUDINARY_API_SECRET", default="dyjdVS__dwgQOG7AQv58JI6PD9I"),
+}
+
+DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -183,7 +196,7 @@ SPECTACULAR_SETTINGS = {
 }
 
 # ------------------------------------------------------------------
-# CORS & Embedding Security
+# CORS, CSRF & Iframe Security
 # ------------------------------------------------------------------
 CORS_ALLOW_ALL_ORIGINS = env.bool("CORS_ALLOW_ALL_ORIGINS", default=True)
 CORS_ALLOW_CREDENTIALS = True
@@ -192,7 +205,7 @@ CORS_ALLOW_CREDENTIALS = True
 X_FRAME_OPTIONS = "ALLOWALL"
 SILENCED_SYSTEM_CHECKS = ["security.W019"]
 
-# CSRF Trusted Origins (403 Forbidden Fix for Render & Custom Domains)
+# Fixes 403 Forbidden on Render Admin forms
 CSRF_TRUSTED_ORIGINS = [
     "https://krishimanthan-testing.onrender.com",
     "https://krishimanthan.in",
@@ -201,7 +214,6 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
 ]
 
-# Tell Django it is behind a reverse proxy (Render) so HTTPS CSRF checks pass
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # ------------------------------------------------------------------
